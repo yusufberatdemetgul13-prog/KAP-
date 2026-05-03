@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAPI AÇMA SİSTEMİ</title>
+    <style>
+        body { 
+            text-align: center; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #121212; 
+            color: white; 
+            padding-top: 80px; 
+        }
+        .container { padding: 20px; }
+        .btn { 
+            background: #e74c3c; 
+            color: white; 
+            border: none; 
+            padding: 50px 0; 
+            font-size: 28px; 
+            font-weight: bold; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            box-shadow: 0 10px #c0392b;
+            width: 100%; 
+            max-width: 350px;
+            transition: 0.2s;
+        }
+        .btn:active { 
+            transform: translateY(5px); 
+            box-shadow: 0 5px #c0392b; 
+        }
+        h1 { font-size: 35px; margin-bottom: 30px; color: #f1c40f; }
+        p { color: #888; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>KAPI AÇMA</h1>
+        <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
+        <p>100 Kişilik Erişim Sistemi</p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // Senin Firebase Bilgilerin
+        const firebaseConfig = {
+            apiKey: "AIzaSyApPXPSNCIKbP2LQeEvgRzHULKigfTrLOc",
+            databaseURL: "https://tobbmt-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+        firebase.initializeApp(firebaseConfig);
+        
+        function kapiyiAc() {
+            // Firebase'deki kapi_durumu'nu 1 yapıyoruz
+            firebase.database().ref('/').update({ kapi_durumu: 1 })
+            .then(() => {
+                alert("Kapı Tetiklendi!");
+            })
+            .catch((error) => {
+                alert("Hata: " + error.message);
+            });
+        }
+    </script>
+</body>
+</html>
