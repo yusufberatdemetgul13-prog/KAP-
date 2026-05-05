@@ -1,63 +1,115 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAPI AÇMA SİSTEMİ</title>
+    <title>KAPI KONTROL PANELİ</title>
     <style>
         body { 
             text-align: center; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: #121212; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #1a1a1a; 
             color: white; 
-            padding-top: 80px; 
+            margin: 0;
+            padding: 40px 20px;
         }
-        .container { padding: 20px; }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #262626;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1 { color: #f1c40f; margin-bottom: 10px; }
+        
+        /* Durum Göstergesi Paneli */
+        .status-panel {
+            background: #333;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid #444;
+        }
+        .status-label { font-size: 14px; color: #aaa; text-transform: uppercase; }
+        #durum-metni { 
+            display: block; 
+            font-size: 28px; 
+            font-weight: bold; 
+            margin-top: 5px;
+            transition: 0.3s;
+        }
+
+        /* Kapı Açma Butonu */
         .btn { 
             background: #e74c3c; 
             color: white; 
             border: none; 
-            padding: 50px 0; 
-            font-size: 28px; 
+            padding: 25px 0; 
+            font-size: 22px; 
             font-weight: bold; 
-            border-radius: 25px; 
+            border-radius: 15px; 
             cursor: pointer; 
-            box-shadow: 0 10px #c0392b;
-            width: 100%; 
-            max-width: 350px;
-            transition: 0.2s;
+            width: 100%;
+            box-shadow: 0 6px #c0392b;
+            transition: 0.1s;
         }
         .btn:active { 
-            transform: translateY(5px); 
-            box-shadow: 0 5px #c0392b; 
+            transform: translateY(4px); 
+            box-shadow: 0 2px #c0392b; 
         }
-        h1 { font-size: 35px; margin-bottom: 30px; color: #f1c40f; }
-        p { color: #888; margin-top: 20px; }
+        .info { font-size: 12px; color: #666; margin-top: 20px; }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>KAPI AÇMA</h1>
+        <h1>KAPI SİSTEMİ</h1>
+        
+        <div class="status-panel">
+            <span class="status-label">Anlık Fiziksel Durum</span>
+            <span id="durum-metni">BAĞLANILIYOR...</span>
+        </div>
+
         <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
-        <p>100 Kişilik Erişim Sistemi</p>
+        
+        <p class="info">D3 pinindeki anahtar durumunu canlı gösterir.</p>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // Senin Firebase Bilgilerin
+        // Firebase Konfigürasyonu
         const firebaseConfig = {
             apiKey: "AIzaSyApPXPSNCIKbP2LQeEvgRzHULKigfTrLOc",
             databaseURL: "https://tobbmt-default-rtdb.europe-west1.firebasedatabase.app"
         };
         firebase.initializeApp(firebaseConfig);
-        
+        const database = firebase.database();
+
+        // 1. ADIM: Kapı Durumunu Canlı Dinle (ESP'den gelen veri)
+        database.ref('/gercek_kapi_durumu').on('value', (snapshot) => {
+            const durum = snapshot.val();
+            const textElement = document.getElementById('durum-metni');
+            
+            if (durum) {
+                textElement.innerText = durum.toUpperCase();
+                
+                // Renk Ayarı
+                if (durum === "Kapı Açık") {
+                    textElement.style.color = "#e74c3c"; // Kırmızı
+                } else {
+                    textElement.style.color = "#2ecc71"; // Yeşil
+                }
+            }
+        });
+
+        // 2. ADIM: Kapıyı Açma Komutu Gönder (Butona basınca)
         function kapiyiAc() {
-            // Firebase'deki kapi_durumu'nu 1 yapıyoruz
-            firebase.database().ref('/').update({ kapi_durumu: 1 })
+            database.ref('/').update({ kapi_durumu: 1 })
             .then(() => {
-                alert("Kapı Tetiklendi!");
+                console.log("Açma komutu gönderildi.");
             })
             .catch((error) => {
                 alert("Hata: " + error.message);
