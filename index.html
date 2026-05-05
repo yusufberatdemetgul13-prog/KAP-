@@ -3,27 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAPI AÇMA SİSTEMİ</title>
+    <title>Kapı Sistemi</title>
     <style>
-        body { text-align: center; font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
-        .container { max-width: 450px; margin: 0 auto; background: #262626; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #f1c40f; margin-bottom: 25px; }
-        .btn { background: #e74c3c; color: white; border: none; padding: 15px; font-size: 18px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
+        body { 
+            text-align: center; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: url('https://r.resimlink.com/7I-9hDq_y.jpg') no-repeat center center fixed; 
+            background-size: cover;
+            color: white; 
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Arka planı hafif karartır */
+            z-index: -1;
+        }
+        .container { 
+            max-width: 450px; 
+            width: 100%;
+            background: rgba(38, 38, 38, 0.9); /* Yarı şeffaf panel */
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.7); 
+            backdrop-filter: blur(5px); /* Panelin arkasını hafif bulanıklaştırır */
+        }
+        h1 { color: #f1c40f; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .btn { background: #e74c3c; color: white; border: none; padding: 15px; font-size: 18px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; transition: 0.3s; }
+        .btn:hover { background: #c0392b; }
         .btn-admin { background: #3498db; }
         .btn-save { background: #2ecc71; font-size: 14px; padding: 10px; }
         .btn-delete { background: #c0392b; padding: 8px 12px; font-size: 12px; width: auto; border-radius: 5px; border:none; color:white; cursor:pointer; }
-        .status-panel { background: #333; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #444; }
-        .user-list { text-align: left; background: #333; padding: 15px; border-radius: 10px; margin-top: 20px; }
+        .status-panel { background: rgba(51, 51, 51, 0.8); padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #555; }
+        .user-list { text-align: left; background: rgba(51, 51, 51, 0.8); padding: 15px; border-radius: 10px; margin-top: 20px; overflow-y: auto; max-height: 300px; }
         .user-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding: 12px 0; }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; }
-        h4 { color: #f1c40f; margin-top: 25px; border-top: 1px solid #444; padding-top: 15px; }
+        h3, h4 { color: #f1c40f; margin-top: 20px; }
+        hr { border: 0; border-top: 1px solid #444; margin: 20px 0; }
+        #durum-metni { font-size: 24px; font-weight: bold; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
-
+    <div class="overlay"></div>
     <div class="container">
-        <h1>BALKALE KAPI</h1>
+        <h1>KAPI SİSTEMİ</h1>
 
         <!-- GİRİŞ EKRANI -->
         <div id="login-screen">
@@ -34,33 +63,33 @@
 
         <!-- KULLANICI PANELİ -->
         <div id="user-panel" class="hidden">
-            <div class="status-panel">Hoş Geldin, <span id="welcome-name"></span></div>
+            <div class="status-panel">
+                <span style="color: #ccc; font-size: 12px;">MERHABA, <span id="welcome-name"></span></span>
+                <span id="durum-metni-user" style="font-size: 22px; font-weight: bold; display: block; margin-top: 5px;">YÜKLENİYOR...</span>
+            </div>
             <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
         </div>
 
         <!-- ADMIN PANELİ -->
         <div id="admin-panel" class="hidden">
             <div class="status-panel">
-                <span style="color: #aaa; font-size: 12px;">KAPI DURUMU</span>
-                <span id="durum-metni" style="font-size: 24px; font-weight: bold; display: block;">YÜKLENİYOR...</span>
+                <span style="color: #ccc; font-size: 12px;">ANLIK DURUM (ADMİN)</span>
+                <span id="durum-metni-admin" style="font-size: 24px; font-weight: bold; display: block;">YÜKLENİYOR...</span>
             </div>
             
             <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
 
-            <!-- Admin Ayarları -->
             <div class="user-list">
                 <h3>Yönetici Ayarları</h3>
                 <input type="text" id="new-admin-user" placeholder="Yeni Admin Adı">
                 <input type="password" id="new-admin-pass" placeholder="Yeni Admin Şifresi">
-                <button class="btn btn-save" onclick="adminGuncelle()">ADMİN BİLGİLERİNİ GÜNCELLE</button>
+                <button class="btn btn-save" onclick="adminGuncelle()">GÜNCELLE</button>
                 
                 <hr>
-
-                <h3>Personel Yönetimi</h3>
+                <h3>Kullanıcı Yönetimi</h3>
                 <div id="users-container"></div>
-                
-                <h4>Yeni Personel Ekle</h4>
-                <input type="text" id="new-user-name" placeholder="Personel Adı">
+                <h4>Yeni Kullanıcı Ekle</h4>
+                <input type="text" id="new-user-name" placeholder="Kullanıcı Adı">
                 <input type="text" id="new-user-pass" placeholder="Şifre">
                 <button class="btn btn-admin" onclick="kullaniciEkle()">YETKİ VER</button>
             </div>
@@ -78,27 +107,21 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // İLK KURULUM: Eğer Firebase boşsa varsayılan admini oluştur
-        database.ref('/adminConfig').once('value', (s) => {
-            if(!s.exists()) { database.ref('/adminConfig').set({ user: "admin", pass: "1234" }); }
-        });
-
         function checkLogin() {
             const uName = document.getElementById('login-user').value;
             const uPass = document.getElementById('login-pass').value;
             
-            // Admin kontrolü (Firebase'den)
             database.ref('/adminConfig').once('value', (snapshot) => {
-                const adminData = snapshot.val();
+                const adminData = snapshot.val() || { user: "admin", pass: "1234" };
                 if (uName === adminData.user && uPass === adminData.pass) {
-                    showAdminPanel();
+                    showPanel('admin-panel');
+                    startStatusListener('durum-metni-admin');
                 } else {
-                    // Personel kontrolü
                     database.ref('/users/' + uName).once('value', (snapshot) => {
                         if (snapshot.exists() && snapshot.val() == uPass) {
-                            document.getElementById('login-screen').className = 'hidden';
-                            document.getElementById('user-panel').className = '';
-                            document.getElementById('welcome-name').innerText = uName;
+                            showPanel('user-panel');
+                            document.getElementById('welcome-name').innerText = uName.toUpperCase();
+                            startStatusListener('durum-metni-user');
                         } else {
                             alert("Hatalı Giriş!");
                         }
@@ -107,45 +130,52 @@
             });
         }
 
-        function showAdminPanel() {
-            document.getElementById('login-screen').className = 'hidden';
-            document.getElementById('admin-panel').className = '';
-            
+        function showPanel(panelId) {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById(panelId).classList.remove('hidden');
+            if(panelId === 'admin-panel') loadUserList();
+        }
+
+        function startStatusListener(elementId) {
             database.ref('/gercek_kapi_durumu').on('value', (s) => {
                 const d = s.val();
-                const el = document.getElementById('durum-metni');
-                el.innerText = d ? d.toUpperCase() : "VERİ YOK";
-                el.style.color = (d === "Kapı Açık") ? "#e74c3c" : "#2ecc71";
+                const el = document.getElementById(elementId);
+                el.innerText = d ? d.toUpperCase() : "BAĞLANTI YOK";
+                el.style.color = (d === "Kapı Açık") ? "#ff4757" : "#2ed573";
             });
+        }
 
+        function loadUserList() {
             database.ref('/users').on('value', (snapshot) => {
                 const container = document.getElementById('users-container');
                 container.innerHTML = "";
                 snapshot.forEach((child) => {
                     container.innerHTML += `<div class="user-item">
-                        <span><strong>${child.key}</strong> (${child.val()})</span>
+                        <span><strong>${child.key}</strong></span>
                         <button class="btn-delete" onclick="kullaniciSil('${child.key}')">SİL</button>
                     </div>`;
                 });
             });
         }
 
-        function adminGuncelle() {
-            const newUser = document.getElementById('new-admin-user').value;
-            const newPass = document.getElementById('new-admin-pass').value;
-            if(newUser && newPass) {
-                database.ref('/adminConfig').set({ user: newUser, pass: newPass })
-                .then(() => alert("Admin bilgileri güncellendi! Bir sonraki girişte yenilerini kullanın."));
-            } else { alert("Lütfen boş bırakmayın!"); }
+        function kapiyiAc() { 
+            database.ref('/').update({ kapi_durumu: 1 });
+            alert("Sinyal Gönderildi!");
         }
 
-        function kapiyiAc() { database.ref('/').update({ kapi_durumu: 1 }); }
-        function kullaniciEkle() {
-            const name = document.getElementById('new-user-name').value;
-            const pass = document.getElementById('new-user-pass').value;
-            if(name && pass) { database.ref('/users/' + name).set(pass); }
+        function adminGuncelle() {
+            const u = document.getElementById('new-admin-user').value;
+            const p = document.getElementById('new-admin-pass').value;
+            if(u && p) database.ref('/adminConfig').set({ user: u, pass: p }).then(() => alert("Güncellendi!"));
         }
-        function kullaniciSil(u) { if(confirm(u + " silinsin mi?")) database.ref('/users/' + u).remove(); }
+
+        function kullaniciEkle() {
+            const n = document.getElementById('new-user-name').value;
+            const p = document.getElementById('new-user-pass').value;
+            if(n && p) database.ref('/users/' + n).set(p);
+        }
+
+        function kullaniciSil(u) { if(confirm("Silinsin mi?")) database.ref('/users/' + u).remove(); }
     </script>
 </body>
 </html>
