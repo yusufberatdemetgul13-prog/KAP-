@@ -3,84 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAPI KONTROL PANELİ</title>
+    <title>Balkale Yönetim Paneli</title>
     <style>
-        body { 
-            text-align: center; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            background: #1a1a1a; 
-            color: white; 
-            margin: 0;
-            padding: 40px 20px;
-        }
-        .container {
-            max-width: 400px;
-            margin: 0 auto;
-            background: #262626;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        h1 { color: #f1c40f; margin-bottom: 10px; }
-        
-        /* Durum Göstergesi Paneli */
-        .status-panel {
-            background: #333;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            border: 1px solid #444;
-        }
-        .status-label { font-size: 14px; color: #aaa; text-transform: uppercase; }
-        #durum-metni { 
-            display: block; 
-            font-size: 28px; 
-            font-weight: bold; 
-            margin-top: 5px;
-            transition: 0.3s;
-        }
-
-        /* Kapı Açma Butonu */
-        .btn { 
-            background: #e74c3c; 
-            color: white; 
-            border: none; 
-            padding: 25px 0; 
-            font-size: 22px; 
-            font-weight: bold; 
-            border-radius: 15px; 
-            cursor: pointer; 
-            width: 100%;
-            box-shadow: 0 6px #c0392b;
-            transition: 0.1s;
-        }
-        .btn:active { 
-            transform: translateY(4px); 
-            box-shadow: 0 2px #c0392b; 
-        }
-        .info { font-size: 12px; color: #666; margin-top: 20px; }
+        body { text-align: center; font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
+        .container { max-width: 450px; margin: 0 auto; background: #262626; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #f1c40f; }
+        .btn { background: #e74c3c; color: white; border: none; padding: 15px; font-size: 18px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
+        .btn-admin { background: #3498db; }
+        .btn-delete { background: #c0392b; padding: 5px 10px; font-size: 12px; width: auto; margin-left: 10px; }
+        .status-panel { background: #333; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #444; }
+        .user-list { text-align: left; background: #333; padding: 15px; border-radius: 10px; margin-top: 20px; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding: 10px 0; }
+        .hidden { display: none; }
+        input { width: 80%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #444; color: white; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>KAPI SİSTEMİ</h1>
-        
-        <div class="status-panel">
-            <span class="status-label">Anlık Fiziksel Durum</span>
-            <span id="durum-metni">BAĞLANILIYOR...</span>
+        <h1>BALKALE KAPI</h1>
+
+        <!-- GİRİŞ EKRANI -->
+        <div id="login-screen">
+            <p>Giriş Şifresi:</p>
+            <input type="password" id="pass-input" placeholder="****">
+            <button class="btn" onclick="checkLogin()">GİRİŞ</button>
         </div>
 
-        <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
-        
-        <p class="info">D3 pinindeki anahtar durumunu canlı gösterir.</p>
+        <!-- KULLANICI PANELİ -->
+        <div id="user-panel" class="hidden">
+            <div class="status-panel">Hoş Geldiniz</div>
+            <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
+        </div>
+
+        <!-- ADMIN PANELİ -->
+        <div id="admin-panel" class="hidden">
+            <div class="status-panel">
+                <span style="color: #aaa; font-size: 12px;">KAPI DURUMU</span>
+                <span id="durum-metni">YÜKLENİYOR...</span>
+            </div>
+            
+            <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
+
+            <div class="user-list">
+                <h3>Kullanıcı Yönetimi</h3>
+                <div id="users-container"></div>
+                
+                <hr style="border: 0.5px solid #444; margin: 20px 0;">
+                
+                <h4>Yeni Kullanıcı Ekle</h4>
+                <input type="text" id="new-user-name" placeholder="İsim (Örn: Ahmet)">
+                <input type="text" id="new-user-pass" placeholder="Şifre (Örn: 1234)">
+                <button class="btn btn-admin" onclick="kullaniciEkle()">KAYDET</button>
+            </div>
+        </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <script>
-        // Firebase Konfigürasyonu
         const firebaseConfig = {
             apiKey: "AIzaSyApPXPSNCIKbP2LQeEvgRzHULKigfTrLOc",
             databaseURL: "https://tobbmt-default-rtdb.europe-west1.firebasedatabase.app"
@@ -88,32 +70,75 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 1. ADIM: Kapı Durumunu Canlı Dinle (ESP'den gelen veri)
-        database.ref('/gercek_kapi_durumu').on('value', (snapshot) => {
-            const durum = snapshot.val();
-            const textElement = document.getElementById('durum-metni');
-            
-            if (durum) {
-                textElement.innerText = durum.toUpperCase();
-                
-                // Renk Ayarı
-                if (durum === "Kapı Açık") {
-                    textElement.style.color = "#e74c3c"; // Kırmızı
-                } else {
-                    textElement.style.color = "#2ecc71"; // Yeşil
-                }
-            }
-        });
+        const ADMIN_SIFRE = "1234"; // Senin şifren sabit kalabilir
 
-        // 2. ADIM: Kapıyı Açma Komutu Gönder (Butona basınca)
-        function kapiyiAc() {
-            database.ref('/').update({ kapi_durumu: 1 })
-            .then(() => {
-                console.log("Açma komutu gönderildi.");
-            })
-            .catch((error) => {
-                alert("Hata: " + error.message);
+        function checkLogin() {
+            const inputPass = document.getElementById('pass-input').value;
+            
+            if (inputPass === ADMIN_SIFRE) {
+                showAdminPanel();
+            } else {
+                // Veritabanındaki kullanıcı şifrelerini kontrol et
+                database.ref('/users').once('value', (snapshot) => {
+                    let found = false;
+                    snapshot.forEach((child) => {
+                        if (child.val() == inputPass) { found = true; }
+                    });
+                    
+                    if (found) {
+                        document.getElementById('login-screen').className = 'hidden';
+                        document.getElementById('user-panel').className = '';
+                    } else {
+                        alert("Şifre Geçersiz veya Kullanıcı Silinmiş!");
+                    }
+                });
+            }
+        }
+
+        function showAdminPanel() {
+            document.getElementById('login-screen').className = 'hidden';
+            document.getElementById('admin-panel').className = '';
+            
+            // Kapı durumunu dinle
+            database.ref('/gercek_kapi_durumu').on('value', (s) => {
+                const d = s.val();
+                const el = document.getElementById('durum-metni');
+                el.innerText = d ? d.toUpperCase() : "BAĞLANTI YOK";
+                el.style.color = (d === "Kapı Açık") ? "#e74c3c" : "#2ecc71";
             });
+
+            // Kullanıcı listesini getir
+            database.ref('/users').on('value', (snapshot) => {
+                const container = document.getElementById('users-container');
+                container.innerHTML = "";
+                snapshot.forEach((child) => {
+                    container.innerHTML += `
+                        <div class="user-item">
+                            <span>${child.key} (${child.val()})</span>
+                            <button class="btn-delete" onclick="kullaniciSil('${child.key}')">SİL / DONDUR</button>
+                        </div>`;
+                });
+            });
+        }
+
+        function kapiyiAc() {
+            database.ref('/').update({ kapi_durumu: 1 });
+            alert("Kapı Tetiklendi!");
+        }
+
+        function kullaniciEkle() {
+            const name = document.getElementById('new-user-name').value;
+            const pass = document.getElementById('new-user-pass').value;
+            if(name && pass) {
+                database.ref('/users/' + name).set(pass);
+                alert(name + " eklendi.");
+            }
+        }
+
+        function kullaniciSil(userName) {
+            if(confirm(userName + " silinsin mi?")) {
+                database.ref('/users/' + userName).remove();
+            }
         }
     </script>
 </body>
