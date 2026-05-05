@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balkale Yönetim Paneli</title>
+    <title>Balkale Yönetim Sistemi</title>
     <style>
         body { text-align: center; font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; }
         .container { max-width: 450px; margin: 0 auto; background: #262626; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #f1c40f; }
+        h1 { color: #f1c40f; margin-bottom: 25px; }
         .btn { background: #e74c3c; color: white; border: none; padding: 15px; font-size: 18px; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
         .btn-admin { background: #3498db; }
-        .btn-delete { background: #c0392b; padding: 5px 10px; font-size: 12px; width: auto; margin-left: 10px; }
+        .btn-save { background: #2ecc71; font-size: 14px; padding: 10px; }
+        .btn-delete { background: #c0392b; padding: 8px 12px; font-size: 12px; width: auto; border-radius: 5px; border:none; color:white; cursor:pointer; }
         .status-panel { background: #333; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #444; }
         .user-list { text-align: left; background: #333; padding: 15px; border-radius: 10px; margin-top: 20px; }
-        .user-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding: 10px 0; }
+        .user-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding: 12px 0; }
         .hidden { display: none; }
-        input { width: 80%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; background: #444; color: white; text-align: center; }
+        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: white; text-align: center; }
+        h4 { color: #f1c40f; margin-top: 25px; border-top: 1px solid #444; padding-top: 15px; }
     </style>
 </head>
 <body>
@@ -25,14 +27,14 @@
 
         <!-- GİRİŞ EKRANI -->
         <div id="login-screen">
-            <p>Giriş Şifresi:</p>
-            <input type="password" id="pass-input" placeholder="****">
-            <button class="btn" onclick="checkLogin()">GİRİŞ</button>
+            <input type="text" id="login-user" placeholder="Kullanıcı Adı">
+            <input type="password" id="login-pass" placeholder="Şifre">
+            <button class="btn" onclick="checkLogin()">GİRİŞ YAP</button>
         </div>
 
         <!-- KULLANICI PANELİ -->
         <div id="user-panel" class="hidden">
-            <div class="status-panel">Hoş Geldiniz</div>
+            <div class="status-panel">Hoş Geldin, <span id="welcome-name"></span></div>
             <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
         </div>
 
@@ -40,21 +42,27 @@
         <div id="admin-panel" class="hidden">
             <div class="status-panel">
                 <span style="color: #aaa; font-size: 12px;">KAPI DURUMU</span>
-                <span id="durum-metni">YÜKLENİYOR...</span>
+                <span id="durum-metni" style="font-size: 24px; font-weight: bold; display: block;">YÜKLENİYOR...</span>
             </div>
             
             <button class="btn" onclick="kapiyiAc()">KAPIYI AÇ</button>
 
+            <!-- Admin Ayarları -->
             <div class="user-list">
-                <h3>Kullanıcı Yönetimi</h3>
+                <h3>Yönetici Ayarları</h3>
+                <input type="text" id="new-admin-user" placeholder="Yeni Admin Adı">
+                <input type="password" id="new-admin-pass" placeholder="Yeni Admin Şifresi">
+                <button class="btn btn-save" onclick="adminGuncelle()">ADMİN BİLGİLERİNİ GÜNCELLE</button>
+                
+                <hr>
+
+                <h3>Personel Yönetimi</h3>
                 <div id="users-container"></div>
                 
-                <hr style="border: 0.5px solid #444; margin: 20px 0;">
-                
-                <h4>Yeni Kullanıcı Ekle</h4>
-                <input type="text" id="new-user-name" placeholder="İsim (Örn: Ahmet)">
-                <input type="text" id="new-user-pass" placeholder="Şifre (Örn: 1234)">
-                <button class="btn btn-admin" onclick="kullaniciEkle()">KAYDET</button>
+                <h4>Yeni Personel Ekle</h4>
+                <input type="text" id="new-user-name" placeholder="Personel Adı">
+                <input type="text" id="new-user-pass" placeholder="Şifre">
+                <button class="btn btn-admin" onclick="kullaniciEkle()">YETKİ VER</button>
             </div>
         </div>
     </div>
@@ -70,76 +78,74 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        const ADMIN_SIFRE = "1234"; // Senin şifren sabit kalabilir
+        // İLK KURULUM: Eğer Firebase boşsa varsayılan admini oluştur
+        database.ref('/adminConfig').once('value', (s) => {
+            if(!s.exists()) { database.ref('/adminConfig').set({ user: "admin", pass: "1234" }); }
+        });
 
         function checkLogin() {
-            const inputPass = document.getElementById('pass-input').value;
+            const uName = document.getElementById('login-user').value;
+            const uPass = document.getElementById('login-pass').value;
             
-            if (inputPass === ADMIN_SIFRE) {
-                showAdminPanel();
-            } else {
-                // Veritabanındaki kullanıcı şifrelerini kontrol et
-                database.ref('/users').once('value', (snapshot) => {
-                    let found = false;
-                    snapshot.forEach((child) => {
-                        if (child.val() == inputPass) { found = true; }
+            // Admin kontrolü (Firebase'den)
+            database.ref('/adminConfig').once('value', (snapshot) => {
+                const adminData = snapshot.val();
+                if (uName === adminData.user && uPass === adminData.pass) {
+                    showAdminPanel();
+                } else {
+                    // Personel kontrolü
+                    database.ref('/users/' + uName).once('value', (snapshot) => {
+                        if (snapshot.exists() && snapshot.val() == uPass) {
+                            document.getElementById('login-screen').className = 'hidden';
+                            document.getElementById('user-panel').className = '';
+                            document.getElementById('welcome-name').innerText = uName;
+                        } else {
+                            alert("Hatalı Giriş!");
+                        }
                     });
-                    
-                    if (found) {
-                        document.getElementById('login-screen').className = 'hidden';
-                        document.getElementById('user-panel').className = '';
-                    } else {
-                        alert("Şifre Geçersiz veya Kullanıcı Silinmiş!");
-                    }
-                });
-            }
+                }
+            });
         }
 
         function showAdminPanel() {
             document.getElementById('login-screen').className = 'hidden';
             document.getElementById('admin-panel').className = '';
             
-            // Kapı durumunu dinle
             database.ref('/gercek_kapi_durumu').on('value', (s) => {
                 const d = s.val();
                 const el = document.getElementById('durum-metni');
-                el.innerText = d ? d.toUpperCase() : "BAĞLANTI YOK";
+                el.innerText = d ? d.toUpperCase() : "VERİ YOK";
                 el.style.color = (d === "Kapı Açık") ? "#e74c3c" : "#2ecc71";
             });
 
-            // Kullanıcı listesini getir
             database.ref('/users').on('value', (snapshot) => {
                 const container = document.getElementById('users-container');
                 container.innerHTML = "";
                 snapshot.forEach((child) => {
-                    container.innerHTML += `
-                        <div class="user-item">
-                            <span>${child.key} (${child.val()})</span>
-                            <button class="btn-delete" onclick="kullaniciSil('${child.key}')">SİL / DONDUR</button>
-                        </div>`;
+                    container.innerHTML += `<div class="user-item">
+                        <span><strong>${child.key}</strong> (${child.val()})</span>
+                        <button class="btn-delete" onclick="kullaniciSil('${child.key}')">SİL</button>
+                    </div>`;
                 });
             });
         }
 
-        function kapiyiAc() {
-            database.ref('/').update({ kapi_durumu: 1 });
-            alert("Kapı Tetiklendi!");
+        function adminGuncelle() {
+            const newUser = document.getElementById('new-admin-user').value;
+            const newPass = document.getElementById('new-admin-pass').value;
+            if(newUser && newPass) {
+                database.ref('/adminConfig').set({ user: newUser, pass: newPass })
+                .then(() => alert("Admin bilgileri güncellendi! Bir sonraki girişte yenilerini kullanın."));
+            } else { alert("Lütfen boş bırakmayın!"); }
         }
 
+        function kapiyiAc() { database.ref('/').update({ kapi_durumu: 1 }); }
         function kullaniciEkle() {
             const name = document.getElementById('new-user-name').value;
             const pass = document.getElementById('new-user-pass').value;
-            if(name && pass) {
-                database.ref('/users/' + name).set(pass);
-                alert(name + " eklendi.");
-            }
+            if(name && pass) { database.ref('/users/' + name).set(pass); }
         }
-
-        function kullaniciSil(userName) {
-            if(confirm(userName + " silinsin mi?")) {
-                database.ref('/users/' + userName).remove();
-            }
-        }
+        function kullaniciSil(u) { if(confirm(u + " silinsin mi?")) database.ref('/users/' + u).remove(); }
     </script>
 </body>
 </html>
